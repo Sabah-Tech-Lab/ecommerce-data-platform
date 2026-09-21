@@ -12,6 +12,9 @@ from ecommerce_data.validation.data_validator import (
     check_datetime_parseability,
     check_datetime_order,
     check_functional_dependency,
+    check_composite_key,
+    check_minimum_value,
+    check_integer_like_column,
 )
 
     # ------------------------------------------------------------------
@@ -684,4 +687,173 @@ def test_check_functional_dependency_with_missing_columns(dataframe_with_missing
 
     assert result == expected_result     
 
+
+# ------------------------------------------------------------------
+# Fixtures for check_composite_key().
+# ------------------------------------------------------------------
+
+
+@pytest.fixture
+def valid_composite_key_df():
+    return pd.DataFrame(
+        {
+            "order_id": ["order_1", "order_1", "order_2"],
+            "order_item_id": [1, 2, 1],
+        }
+    )
+
+
+@pytest.fixture
+def invalid_composite_key_df():
+    return pd.DataFrame(
+        {
+            "order_id": ["order_1", "order_1"],
+            "order_item_id": [1, 1],
+        }
+    )
+
+
+# ------------------------------------------------------------------
+# Tests for check_composite_key().
+# ------------------------------------------------------------------
+
+
+def test_check_composite_key_valid(valid_composite_key_df):
+    result = check_composite_key(
+        valid_composite_key_df,
+        ["order_id", "order_item_id"],
+    )
+
+    assert result["is_valid"] is True
+    assert result["violation_count"] == 0
+
+
+def test_check_composite_key_invalid(invalid_composite_key_df):
+    result = check_composite_key(
+        invalid_composite_key_df,
+        ["order_id", "order_item_id"],
+    )
+
+    assert result["is_valid"] is False
+    assert result["violation_count"] == 1
+
+
+# ------------------------------------------------------------------
+# Fixtures for check_minimum_value().
+# ------------------------------------------------------------------
+
+
+@pytest.fixture
+def valid_minimum_value_df():
+    return pd.DataFrame(
+        {
+            "price": [10.0, 20.0, 5.0],
+            "freight_value": [0.0, 5.0, 10.0],
+        }
+    )
+
+
+@pytest.fixture
+def invalid_minimum_value_df():
+    return pd.DataFrame(
+        {
+            "price": [10.0, 0.0, -5.0],
+        }
+    )
+
+
+# ------------------------------------------------------------------
+# Tests for check_minimum_value().
+# ------------------------------------------------------------------
+
+
+def test_check_minimum_value_valid(valid_minimum_value_df):
+    price_result = check_minimum_value(
+        valid_minimum_value_df,
+        "price",
+        minimum_value=0,
+        inclusive=False,
+    )
+
+    freight_result = check_minimum_value(
+        valid_minimum_value_df,
+        "freight_value",
+        minimum_value=0,
+        inclusive=True,
+    )
+
+    assert price_result["is_valid"] is True
+    assert price_result["violation_count"] == 0
+
+    assert freight_result["is_valid"] is True
+    assert freight_result["violation_count"] == 0
+
+
+def test_check_minimum_value_invalid(invalid_minimum_value_df):
+    result = check_minimum_value(
+        invalid_minimum_value_df,
+        "price",
+        minimum_value=0,
+        inclusive=False,
+    )
+
+    assert result["is_valid"] is False
+    assert result["violation_count"] == 2
+
+# ------------------------------------------------------------------
+# Fixtures for check_integer_like_column().
+# ------------------------------------------------------------------
+
+
+@pytest.fixture
+def valid_integer_like_df():
+    return pd.DataFrame(
+        {
+            "product_photos_qty": [
+                1.0,
+                2.0,
+                3.0,
+                None,
+            ]
+        }
+    )
+
+
+@pytest.fixture
+def invalid_integer_like_df():
+    return pd.DataFrame(
+        {
+            "product_photos_qty": [
+                1.0,
+                2.5,
+                3.0,
+                None,
+            ]
+        }
+    )
+
+
+# ------------------------------------------------------------------
+# Tests for check_integer_like_column().
+# ------------------------------------------------------------------
+
+
+def test_check_integer_like_column_valid(valid_integer_like_df):
+    result = check_integer_like_column(
+        valid_integer_like_df,
+        "product_photos_qty",
+    )
+
+    assert result["is_valid"] is True
+    assert result["violation_count"] == 0
+
+
+def test_check_integer_like_column_invalid(invalid_integer_like_df):
+    result = check_integer_like_column(
+        invalid_integer_like_df,
+        "product_photos_qty",
+    )
+
+    assert result["is_valid"] is False
+    assert result["violation_count"] == 1    
 

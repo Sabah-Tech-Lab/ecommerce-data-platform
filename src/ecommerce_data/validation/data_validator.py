@@ -274,7 +274,7 @@ def check_composite_key(df: pd.DataFrame, key_columns: list[str]) -> dict:
     if not column_check["is_valid"]:
         return {
             "is_valid": False,
-            "duplicate_values_count": 0,
+            "violation_count": 0,
             "missing_columns": column_check["missing_columns"],
         }
 
@@ -286,7 +286,7 @@ def check_composite_key(df: pd.DataFrame, key_columns: list[str]) -> dict:
 
     return {
         "is_valid": duplicate_composite_keys_count== 0,
-        "duplicate_values_count": duplicate_composite_keys_count,
+        "violation_count": duplicate_composite_keys_count,
         "missing_columns": [],
     }    
 
@@ -318,6 +318,34 @@ def check_minimum_value(
         "violation_count": violation_count,
         "missing_columns": [],
     }     
+
+def check_integer_like_column(
+        df: pd.DataFrame, 
+        column_name: str,
+) -> dict:
+    column_check = check_required_columns(df, {column_name})
+
+
+    if not column_check["is_valid"]:
+        return {
+            "is_valid": False,
+            "violation_count": 0,
+            "missing_columns": column_check["missing_columns"],
+        }
+    
+    non_integer_values_count = int(
+        df[column_name]
+        .dropna()
+        .mod(1)
+        .ne(0)
+        .sum()
+        )
+
+    return {
+        "is_valid": non_integer_values_count == 0,
+        "violation_count": non_integer_values_count,
+        "missing_columns": [],
+    }
     
 
 

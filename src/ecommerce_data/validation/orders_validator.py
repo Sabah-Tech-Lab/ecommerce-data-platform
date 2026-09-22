@@ -1,10 +1,9 @@
 import pandas as pd
 
+from ecommerce_data.validation.base_validator import (
+    validate_base_dataset_rules,
+)
 from ecommerce_data.validation.data_validator import (
-    check_non_null_columns,
-    check_required_columns,
-    check_unique_column,
-    is_dataframe_empty,
     check_allowed_values,
     check_datetime_parseability,
     check_datetime_order,
@@ -42,26 +41,11 @@ def validate_orders(df: pd.DataFrame) -> dict:
         Validation report containing an overall status and detailed results for
         each validation category.
     """
-    empty_dataframe_result = is_dataframe_empty(df)
-
-    required_columns_result = check_required_columns(
-        df,
-        REQUIRED_COLUMNS,
-    )
-
-    non_null_columns_result = check_non_null_columns(
-        df,
-        NON_NULL_COLUMNS,
-    )
-
-    unique_columns_result = {
-        column: check_unique_column(df, column)
-        for column in UNIQUE_COLUMNS
-    }
-
-    unique_columns_valid = all(
-        result["is_valid"]
-        for result in unique_columns_result.values()
+    validation_results = validate_base_dataset_rules(
+        df=df,
+        required_columns=REQUIRED_COLUMNS,
+        non_null_columns=NON_NULL_COLUMNS,
+        unique_columns=UNIQUE_COLUMNS,
     )
 
     datetime_parseability_result = check_datetime_parseability(
@@ -101,54 +85,41 @@ def validate_orders(df: pd.DataFrame) -> dict:
         result["is_valid"]
         for result in temporal_rules_result.values()
     )
-    
-    validation_results = {
 
-        "dataframe_not_empty": {
-            "status": 
-                get_status(not empty_dataframe_result),
-            "details": {
-            "is_empty": empty_dataframe_result,
-            },
-        },
-        "required_columns": {
-            "status": 
-                get_status(required_columns_result["is_valid"]),
-            "details": required_columns_result,
-        },
-        "non_null_columns": {
-            "status": 
-                get_status(non_null_columns_result["is_valid"]),
-            "details": non_null_columns_result,
-        },
-        "unique_columns": {
-            "status": 
-                get_status(unique_columns_valid),
-            "details": unique_columns_result,
-        },
-        "order_status": {
-            "status": 
-                get_status(allowed_order_statuses_result["is_valid"]),
-            "details": allowed_order_statuses_result,
-        },
-        "datetime_parseability": {
-            "status": 
-                get_status(datetime_parseability_result["is_valid"]),
-            "details": datetime_parseability_result,
-        },
-        "functional_dependency": {
-            "status": 
-                get_status(functional_dependency_valid),
-            "details": functional_dependency_result
-        },
-        "datetime_order": {
-            "status": 
-                get_status(temporal_rules_valid,failure_status="WARNING",),
-                
-            "details": temporal_rules_result
-        },
-        
+
+
+
+    validation_results["order_status"] = {
+        "status": 
+            get_status(
+                allowed_order_statuses_result["is_valid"]
+                ),
+        "details": allowed_order_statuses_result,
     }
+    validation_results["datetime_parseability"] = {
+        "status": 
+            get_status(
+                datetime_parseability_result["is_valid"]
+                ),
+        "details": datetime_parseability_result,
+    }
+    validation_results["functional_dependency"] = {
+        "status": 
+            get_status(
+                functional_dependency_valid
+                ),
+        "details": functional_dependency_result
+    }
+    validation_results["datetime_order"] = {
+        "status": 
+            get_status(
+                temporal_rules_valid,failure_status="WARNING",
+                ),
+                
+        "details": temporal_rules_result
+    }
+        
+    
 
     overall_status = get_overall_status(validation_results)
 

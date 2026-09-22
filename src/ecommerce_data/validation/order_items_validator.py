@@ -1,10 +1,10 @@
 import pandas as pd
 
+from ecommerce_data.validation.base_validator import (
+    validate_base_dataset_rules,
+)
 from ecommerce_data.validation.data_validator import (
-    check_non_null_columns,
-    check_required_columns,
     check_composite_key,
-    is_dataframe_empty,
     check_datetime_parseability,
     check_minimum_value,
    
@@ -27,8 +27,8 @@ from ecommerce_data.validation.reporting import (
 def validate_order_items(df: pd.DataFrame) -> dict:
     """Validate the Olist order items dataset against configured data-quality rules.
 
-    The validation covers schema requirements, nullability, composite-key uniqueness,  
-    datetime parseability, and valid values. 
+    The validation covers schema requirements, nullability, composite-key uniqueness,
+    datetime parseability, and minimum-value constraints. 
 
     Args:
         df: Raw Olist order items DataFrame to validate.
@@ -38,30 +38,24 @@ def validate_order_items(df: pd.DataFrame) -> dict:
         each validation category.
     """
 
-    empty_dataframe_result = is_dataframe_empty(df)
-
-    required_columns_result = check_required_columns(
-        df,
-        REQUIRED_COLUMNS,
-    )
-
-    non_null_columns_result = check_non_null_columns(
-        df,
-        NON_NULL_COLUMNS,
+    validation_results = validate_base_dataset_rules(
+        df=df,
+        required_columns=REQUIRED_COLUMNS,
+        non_null_columns=NON_NULL_COLUMNS,
     )
 
     composite_key_result = check_composite_key(
         df,
         COMPOSITE_KEY_COLUMNS,
     )
-
+    
     datetime_parseability_result = check_datetime_parseability(
         df, 
         DATETIME_COLUMNS,
-        )
+    )
 
     minimum_value_rule_result = {
-        f"{column_name}": check_minimum_value(
+        column_name: check_minimum_value(
             df,
             column_name,
             minimum_value,
@@ -75,45 +69,28 @@ def validate_order_items(df: pd.DataFrame) -> dict:
         for result in minimum_value_rule_result.values()
     )
 
-    validation_results = {
 
-        "dataframe_not_empty": {
-            "status": 
-                get_status(not empty_dataframe_result),
-            "details": {
-            "is_empty": empty_dataframe_result,
-            },
-        },
-        "required_columns": {
-            "status": 
-                get_status(required_columns_result["is_valid"]),
-            "details": required_columns_result,
-        },
-        "non_null_columns": {
-            "status": 
-                get_status(non_null_columns_result["is_valid"]),
-            "details": non_null_columns_result,
-        },
-        "composite_key": {
-            "status": 
-                get_status(composite_key_result["is_valid"]),
-            "details": composite_key_result,
-        },
 
-        "datetime_parseability": {
-            "status": 
-                get_status(datetime_parseability_result["is_valid"]),
-            "details": datetime_parseability_result,
-        },
-
-        "minimum_value_validation": {
-            "status": 
-                get_status(minimum_value_rule_valid),
-                
-            "details": minimum_value_rule_result
-        },
-        
+    validation_results["composite_key"] = {
+        "status": 
+            get_status(composite_key_result["is_valid"]),
+        "details": composite_key_result,
     }
+
+    validation_results["datetime_parseability"] = {
+        "status": 
+            get_status(datetime_parseability_result["is_valid"]),
+        "details": datetime_parseability_result,
+    }
+
+    validation_results["minimum_value_validation"] = {
+        "status": 
+            get_status(minimum_value_rule_valid),
+                
+        "details": minimum_value_rule_result
+    }
+        
+    
 
     overall_status = get_overall_status(validation_results)
 

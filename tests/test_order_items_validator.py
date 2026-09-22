@@ -108,7 +108,7 @@ def test_validate_order_items_all_valid(valid_order_items_dataframe):
             "status": "PASS",
             "details": {
                 "is_valid": True,
-                "duplicate_values_count": 0,
+                "violation_count": 0,
                 "missing_columns": [],
             },
         },
@@ -175,7 +175,7 @@ def test_validate_order_items_with_composite_key_violation(
             "status": "FAIL",
             "details": {
                 "is_valid": False,
-                "duplicate_values_count": 1,
+                "violation_count": 1,
                 "missing_columns": [],
             },
         },
@@ -244,7 +244,7 @@ def test_validate_order_items_with_invalid_price(
             "status": "PASS",
             "details": {
                 "is_valid": True,
-                "duplicate_values_count": 0,
+                "violation_count": 0,
                 "missing_columns": [],
             },
         },
@@ -313,7 +313,7 @@ def test_validate_order_items_with_invalid_datetime(
             "status": "PASS",
             "details": {
                 "is_valid": True,
-                "duplicate_values_count": 0,
+                "violation_count": 0,
                 "missing_columns": [],
             },
         },

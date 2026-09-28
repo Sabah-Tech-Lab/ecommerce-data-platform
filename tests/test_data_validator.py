@@ -15,6 +15,7 @@ from ecommerce_data.validation.data_validator import (
     check_composite_key,
     check_minimum_value,
     check_integer_like_column,
+    check_value_range,
 )
 
     # ------------------------------------------------------------------
@@ -855,5 +856,71 @@ def test_check_integer_like_column_invalid(invalid_integer_like_df):
     )
 
     assert result["is_valid"] is False
-    assert result["violation_count"] == 1    
+    assert result["violation_count"] == 1 
+
+
+ # ------------------------------------------------------------------
+# Fixtures for check_value_range().
+# ------------------------------------------------------------------
+
+
+@pytest.fixture
+def valid_value_range_df():
+    return pd.DataFrame(
+        {
+            "review_score": [
+                1,
+                3,
+                5,
+            ]
+        }
+    )
+
+
+@pytest.fixture
+def invalid_value_range_df():
+    return pd.DataFrame(
+        {
+            "review_score": [
+                0,
+                3,
+                6,
+            ]
+        }
+    )
+
+
+# ------------------------------------------------------------------
+# Tests for check_value_range().
+# ------------------------------------------------------------------
+
+
+def test_check_value_range_valid(
+    valid_value_range_df,
+):
+    result = check_value_range(
+        valid_value_range_df,
+        "review_score",
+        minimum_value=1,
+        maximum_value=5,
+    )
+
+    assert result["is_valid"] is True
+    assert result["violation_count"] == 0
+    assert result["missing_columns"] == []
+
+
+def test_check_value_range_invalid(
+    invalid_value_range_df,
+):
+    result = check_value_range(
+        invalid_value_range_df,
+        "review_score",
+        minimum_value=1,
+        maximum_value=5,
+    )
+
+    assert result["is_valid"] is False
+    assert result["violation_count"] == 2
+    assert result["missing_columns"] == []    
 

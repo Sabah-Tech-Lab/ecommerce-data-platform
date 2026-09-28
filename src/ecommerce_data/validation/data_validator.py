@@ -346,6 +346,34 @@ def check_integer_like_column(
         "violation_count": non_integer_values_count,
         "missing_columns": [],
     }
+
+def check_value_range(
+    df: pd.DataFrame,
+    column_name: str,
+    minimum_value: int | float,
+    maximum_value: int | float,
+) -> dict:
+    column_check = check_required_columns(df, {column_name})
+
+    if not column_check["is_valid"]:
+        return {
+            "is_valid": False,
+            "violation_count": 0,
+            "missing_columns": column_check["missing_columns"],
+        }
+
+    violations = (
+        (df[column_name] < minimum_value)
+        | (df[column_name] > maximum_value)
+    )
+
+    violation_count = int(violations.sum())
+
+    return {
+        "is_valid": violation_count == 0,
+        "violation_count": violation_count,
+        "missing_columns": [],
+    }
     
 
 

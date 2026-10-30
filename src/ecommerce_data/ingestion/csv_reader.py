@@ -7,5 +7,5 @@ def read_csv(file_path: Path | str) -> pd.DataFrame:
     file_path = Path(file_path)
     if not file_path.exists():
         raise FileNotFoundError(f"{file_path} does not exist")
-    else:
-       return pd.read_csv(file_path)
+   
+    return pd.read_csv(file_path)

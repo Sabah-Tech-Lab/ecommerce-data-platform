@@ -1,10 +1,12 @@
 from pathlib import Path
-from ecommerce_data.ingestion.csv_writer import write_csv
+
 from ecommerce_data.ingestion.csv_reader import read_csv
+from ecommerce_data.ingestion.csv_writer import write_csv
 from ecommerce_data.transformation.products_transformer import transform_products
 
 
 CSV_PATH = Path("data/raw/olist/olist_products_dataset.csv")
+OUTPUT_PATH = Path("data/processed/products.csv")
 
 
 def main() -> None:
@@ -15,17 +17,12 @@ def main() -> None:
     # ------------------------------------------------------------------
 
     raw_df = read_csv(CSV_PATH)
-    OUTPUT_PATH = Path("data/processed/products.csv")
     cleaned_df = transform_products(raw_df)
-
-    write_csv(
-        cleaned_df,
-        OUTPUT_PATH,
-    )
     
     raw_columns = set(raw_df.columns)
     cleaned_columns = set(cleaned_df.columns)
 
+    print("\n=== MODIFICATIONS ===")
     print(
         "Removed columns:",
         sorted(raw_columns - cleaned_columns),
@@ -35,32 +32,43 @@ def main() -> None:
         "Added columns:",
         sorted(cleaned_columns - raw_columns),
     )
+
     integer_columns = [
         "product_name_length",
         "product_description_length",
         "product_photos_qty",
     ]
+
+    print("\n=== INTEGER COLUMNS ===")
     for column in integer_columns:
         print(f"{column}: {cleaned_df[column].dtype}")
 
+    print("\n=== PRODUCT WEIGHT ===")
     print(
-        "Number of zero product weights in raw DataFrame:",
+        "Zero product weights in raw:",
         (raw_df["product_weight_g"] == 0).sum(),
     )    
 
     print(
-        "Number of missing product weights in raw DataFrame:",
+        "Missing product weights in raw:",
         raw_df["product_weight_g"].isna().sum(),
     ) 
+
     print(
-        "Number of missing product weights in cleaned DataFrame:",
+        "Missing product weights in cleaned:",
         cleaned_df["product_weight_g"].isna().sum(),
     )    
 
-    print("Raw shape:", raw_df.shape)
-    print("Cleaned shape:", cleaned_df.shape)
+    print("\n=== DATASET SHAPE ===")       
+    print(f"Raw:    {raw_df.shape}")
+    print(f"Cleaned:{cleaned_df.shape}")
 
-    print(f"Processed products saved to: {OUTPUT_PATH}")
+    write_csv(
+        cleaned_df,
+        OUTPUT_PATH,
+    )
+    print("\n=== OUTPUT ===")
+    print(f"saved to: {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
